@@ -6,7 +6,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import requests
 from bs4 import BeautifulSoup
-import feedparser
 from datetime import datetime, timedelta, timezone
 import time
 import re
