@@ -225,32 +225,34 @@ class NewsCrawler:
                 return None
 
         def get_yonhap_content_summary(url):
-            """연합뉴스 기사 본문 첫 2문단 가져오기"""
+            """연합뉴스 기사 본문 첫 2문단 가져오기 (정확한 선택자)"""
             try:
                 response = self.session.get(url)
                 response.raise_for_status()
                 
                 soup = BeautifulSoup(response.content, 'html.parser')
                 
-                content_div = soup.select_one('#articleWrap')
+                # articleWrap 안의 div.story-news 안의 p 태그들만 가져오기
+                story_div = soup.select_one('#articleWrap div.story-news')
                 
-                if content_div:
-                    for unwanted in content_div.find_all(['script', 'style', 'aside', 'footer', 'nav']):
-                        unwanted.decompose()
+                if story_div:
+                    # p 태그들만 추출
+                    paragraphs = story_div.select('p')
                     
-                    text = content_div.get_text(strip=True)
-                    
-                    # 문단 분리 (빈 줄 또는 마침표로)
-                    paragraphs = re.split(r'\n\s*\n|\.(?=\s+[A-Z가-힣])', text)
-                    paragraphs = [p.strip() for p in paragraphs if p.strip() and len(p.strip()) > 20]
+                    # 텍스트만 추출하고 빈 문단 제거
+                    paragraph_texts = []
+                    for p in paragraphs:
+                        text = p.get_text(strip=True)
+                        if text and len(text) > 20:  # 20자 이상인 문단만
+                            paragraph_texts.append(text)
                     
                     # 첫 2문단만 가져오기
-                    if len(paragraphs) >= 2:
-                        summary = paragraphs[0] + '. ' + paragraphs[1]
-                    elif len(paragraphs) == 1:
-                        summary = paragraphs[0]
+                    if len(paragraph_texts) >= 2:
+                        summary = paragraph_texts[0] + ' ' + paragraph_texts[1]
+                    elif len(paragraph_texts) == 1:
+                        summary = paragraph_texts[0]
                     else:
-                        summary = text[:300]  # 문단 분리가 안되면 처음 300자
+                        return None
                     
                     # 길이 제한 (500자)
                     if len(summary) > 500:
