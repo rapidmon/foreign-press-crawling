@@ -83,6 +83,17 @@ class NewsEmailSender:
                         <div class="news-title">{i}. {article['title']}</div>
                         <p style="color: #7f8c8d; font-size: 12px;">발행시간: {published_time}</p>
                         <a href="{article['link']}" class="news-link" target="_blank">기사 보기</a>
+                """
+                
+                # 본문 내용이 있으면 추가
+                if article.get('content'):
+                    html_content += f"""
+                        <div class="news-content">
+                            <p style="margin-top: 8px; color: #555; line-height: 1.5;">{article['content']}</p>
+                        </div>
+                    """
+                
+                html_content += """
                     </div>
                 """
         else:

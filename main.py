@@ -224,8 +224,8 @@ class NewsCrawler:
                 print(f"시간 파싱 실패: {time_text}, 오류: {e}")
                 return None
 
-        def get_yonhap_content_request(url):
-            """연합뉴스 기사 본문 가져오기 (requests 방식)"""
+        def get_yonhap_content_summary(url):
+            """연합뉴스 기사 본문 첫 2문단 가져오기"""
             try:
                 response = self.session.get(url)
                 response.raise_for_status()
@@ -239,7 +239,26 @@ class NewsCrawler:
                         unwanted.decompose()
                     
                     text = content_div.get_text(strip=True)
-                    return text
+                    
+                    # 문단 분리 (빈 줄 또는 마침표로)
+                    paragraphs = re.split(r'\n\s*\n|\.(?=\s+[A-Z가-힣])', text)
+                    paragraphs = [p.strip() for p in paragraphs if p.strip() and len(p.strip()) > 20]
+                    
+                    # 첫 2문단만 가져오기
+                    if len(paragraphs) >= 2:
+                        summary = paragraphs[0] + '. ' + paragraphs[1]
+                    elif len(paragraphs) == 1:
+                        summary = paragraphs[0]
+                    else:
+                        summary = text[:300]  # 문단 분리가 안되면 처음 300자
+                    
+                    # 길이 제한 (500자)
+                    if len(summary) > 500:
+                        summary = summary[:500] + '...'
+                    
+                    return summary
+                
+                return None
                 
             except Exception as e:
                 print(f"본문 가져오기 실패: {e}")
@@ -288,18 +307,18 @@ class NewsCrawler:
                         
                         # 시간 필터링
                         if yesterday_23 <= article_time <= today_0830:
+                            content_summary = get_yonhap_content_summary(full_link)
                             filtered_articles.append({
                                 'title': title,
                                 'link': full_link,
-                                'published': article_time
+                                'published': article_time,
+                                'content': content_summary
                             })
                             
                             print(f"\n📰 기사 {len(filtered_articles)}:")
                             print(f"제목: {title}")
                             print(f"발행시간: {article_time}")
                             print(f"링크: {full_link}")
-                            content = get_yonhap_content_request(full_link)
-                            print(f"본문 ({len(content)}자): {content}")
 
                     except Exception as e:
                         print(f"기사 {i+1} 처리 중 오류: {e}")
