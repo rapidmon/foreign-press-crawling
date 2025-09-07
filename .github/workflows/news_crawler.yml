@@ -1,0 +1,54 @@
+# .github/workflows/news_crawler.yml
+name: Daily News Crawler
+
+on:
+  schedule:
+    # 매일 오전 8시 30분 (UTC 기준이므로 KST 8:30 = UTC 23:30)
+    - cron: '30 23 * * *'
+  workflow_dispatch: # 수동 실행도 가능
+
+jobs:
+  crawl-news:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install requests beautifulsoup4 selenium
+        pip install webdriver-manager
+        
+    - name: Install Chrome and ChromeDriver
+      run: |
+        # Chrome 설치
+        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        
+        # ChromeDriver 자동 설치를 위한 webdriver-manager 사용
+        
+    - name: Run news crawler
+      env:
+        GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+        GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+        RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+      run: |
+        python main.py
+        
+    - name: Upload logs (optional)
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: crawler-logs
+        path: |
+          *.log
+          *.txt
