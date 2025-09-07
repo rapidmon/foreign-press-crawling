@@ -37,12 +37,12 @@ class NewsEmailSender:
         </head>
         <body>
             <div class="header">
-                <h1>📰 일간 뉴스 브리핑</h1>
+                <h1>일간 뉴스 브리핑</h1>
                 <p>{current_time} 발송</p>
             </div>
             
             <div class="section">
-                <h2>🌍 외신 헤드라인</h2>
+                <h2>외신 헤드라인</h2>
                 <div class="foreign-news">
         """
         
@@ -51,7 +51,7 @@ class NewsEmailSender:
             if news_data:
                 html_content += f"""
                     <div class="news-item">
-                        <div class="news-title">{site_name}</div>
+                        <h3 class="news-title">{site_name}</h3>
                         <a href="{news_data['link']}" class="news-link" target="_blank">
                             {news_data['title']}
                         </a>
@@ -60,7 +60,7 @@ class NewsEmailSender:
             else:
                 html_content += f"""
                     <div class="news-item">
-                        <div class="news-title">{site_name}</div>
+                        <h3 class="news-title">{site_name}</h3>
                         <p style="color: #e74c3c;">크롤링 실패</p>
                     </div>
                 """
@@ -70,7 +70,7 @@ class NewsEmailSender:
             </div>
             
             <div class="section">
-                <h2>🇰🇷 연합뉴스 국제</h2>
+                <h2>연합뉴스 국제</h2>
                 <div class="yonhap-news">
         """
         
@@ -80,7 +80,7 @@ class NewsEmailSender:
                 published_time = article['published'].strftime('%m-%d %H:%M')
                 html_content += f"""
                     <div class="news-item">
-                        <div class="news-title">{i}. {article['title']}</div>
+                        <h3 class="news-title">{i}. {article['title']}</h3>
                         <p style="color: #7f8c8d; font-size: 12px;">발행시간: {published_time}</p>
                         <a href="{article['link']}" class="news-link" target="_blank">기사 보기</a>
                 """
@@ -89,7 +89,7 @@ class NewsEmailSender:
                 if article.get('content'):
                     html_content += f"""
                         <div class="news-content">
-                            <p style="margin-top: 8px; color: #555; line-height: 1.5;">{article['content']}</p>
+                            <p style="margin: 8px 0; color: #555; line-height: 1.5;">{article['content']}</p>
                         </div>
                     """
                 
@@ -121,7 +121,7 @@ class NewsEmailSender:
         try:
             # 메시지 생성
             msg = MIMEMultipart('alternative')
-            msg['Subject'] = f"📰 일간 뉴스 브리핑 - {datetime.now().strftime('%Y.%m.%d')}"
+            msg['Subject'] = f"📰 일간 뉴스 브리핑 - {datetime.now(KST).strftime('%Y.%m.%d')}"
             msg['From'] = self.email
             msg['To'] = self.recipient
             
