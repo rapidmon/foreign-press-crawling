@@ -12,10 +12,11 @@ import time
 import re
 from urllib.parse import urljoin
 import json
+from email_sender import NewsEmailSender
 
 KST = timezone(timedelta(hours=9))
 
-class NewsCrawlerTest:
+class NewsCrawler:
     def __init__(self):
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -311,53 +312,56 @@ class NewsCrawlerTest:
         except Exception as e:
             print(f"❌ 연합뉴스 크롤링 실패: {e}")
             return []
-    
-    def run_all_tests(self):
-        """모든 크롤링 테스트 실행"""
-        print("뉴스 크롤링 테스트 시작 (수정된 버전)\n")
-        
-        results = {}
-        
-        # 외신 메인 헤드라인 테스트 (각 1개씩)
-        foreign_tests = [
-            ("BBC", self.crawl_bbc_headline),
-            ("CNN", self.crawl_cnn_headline),
-            ("Fox News", self.crawl_fox_headline),
-            ("NYT", self.crawl_nyt_headline),
-            ("Washington Post", self.crawl_wp_headline_selenium)
-        ]
-        
-        print("🌍 외신 메인 헤드라인 테스트:")
-        for name, test_func in foreign_tests:
-            try:
-                print(f"\n{'-'*30}")
-                result = test_func()
-                results[name] = "성공" if result else "실패"
-                time.sleep(1)
-            except Exception as e:
-                print(f"{name} 테스트 중 오류: {e}")
-                results[name] = "오류"
-        
-        # 연합뉴스 전체 기사 테스트
-        print(f"\n{'='*50}")
-        print("🇰🇷 연합뉴스 국제 기사 테스트:")
-        try:
-            result = self.crawl_yonhap_request()
-            results["연합뉴스"] = "성공" if result else "실패"
-        except Exception as e:
-            print(f"연합뉴스 테스트 중 오류: {e}")
-            results["연합뉴스"] = "오류"
-        
-        # 결과 요약
-        print(f"\n{'='*50}")
-        print("📊 테스트 결과 요약:")
-        for site, result in results.items():
-            status_emoji = "✅" if result == "성공" else "❌" if result == "실패" else "⚠️"
-            print(f"{status_emoji} {site}: {result}")
-        
-        return results
 
-# 실행
+def main():
+    """메인 실행 함수"""
+    print("=== 일일 뉴스 크롤링 시작 ===")
+    
+    # 기존 크롤러 인스턴스 생성
+    crawler = NewsCrawler()
+    email_sender = NewsEmailSender()
+    
+    # 외신 크롤링
+    foreign_news = {}
+    foreign_sites = [
+        ("BBC", crawler.crawl_bbc_headline),
+        ("CNN", crawler.crawl_cnn_headline),
+        ("Fox News", crawler.crawl_fox_headline),
+        ("NYT", crawler.crawl_nyt_headline),
+        ("Washington Post", crawler.crawl_wp_headline_selenium)
+    ]
+    
+    for site_name, crawl_func in foreign_sites:
+        try:
+            print(f"\n{site_name} 크롤링 중...")
+            result = crawl_func()
+            foreign_news[site_name] = result
+            time.sleep(2)
+        except Exception as e:
+            print(f"{site_name} 크롤링 실패: {e}")
+            foreign_news[site_name] = None
+    
+    # 연합뉴스 크롤링
+    try:
+        print(f"\n연합뉴스 크롤링 중...")
+        yonhap_articles = crawler.crawl_yonhap_request()
+    except Exception as e:
+        print(f"연합뉴스 크롤링 실패: {e}")
+        yonhap_articles = []
+    
+    # 결과 요약
+    print(f"\n=== 크롤링 결과 요약 ===")
+    print(f"외신 성공: {sum(1 for v in foreign_news.values() if v)}/{len(foreign_news)}")
+    print(f"연합뉴스 기사: {len(yonhap_articles)}개")
+    
+    # 이메일 발송
+    print(f"\n이메일 발송 중...")
+    success = email_sender.send_email(foreign_news, yonhap_articles)
+    
+    if success:
+        print("🎉 일일 뉴스 브리핑 완료!")
+    else:
+        print("❌ 이메일 발송 실패")
+
 if __name__ == "__main__":
-    crawler = NewsCrawlerTest()
-    results = crawler.run_all_tests()
+    main()
