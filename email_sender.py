@@ -2,8 +2,10 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import os
+
+KST = timezone(timedelta(hours=9))
 
 class NewsEmailSender:
     def __init__(self):
@@ -121,7 +123,7 @@ class NewsEmailSender:
         try:
             # 메시지 생성
             msg = MIMEMultipart('alternative')
-            msg['Subject'] = f"📰 일간 뉴스 브리핑 - {datetime.now(KST).strftime('%Y.%m.%d')}"
+            msg['Subject'] = f"일간 뉴스 브리핑 - {datetime.now(KST).strftime('%Y.%m.%d')}"
             msg['From'] = self.email
             msg['To'] = self.recipient
             
